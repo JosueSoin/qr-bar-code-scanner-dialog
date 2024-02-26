@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 import 'qr_bar_code_scanner_dialog_platform_interface.dart';
+import 'responsive.dart';
 
 /// An implementation of [QrBarCodeScannerDialogPlatform] that uses method channels.
 class MethodChannelQrBarCodeScannerDialog
@@ -27,26 +28,49 @@ class MethodChannelQrBarCodeScannerDialog
     /// context is required to show alert in non-web platforms
     assert(context != null);
 
+    final Responsive responsive = Responsive.of(context!);
+
     showDialog(
         context: context!,
-        builder: (context) => Container(
-              alignment: Alignment.center,
+        builder: (context) => SafeArea(
               child: Container(
-                height: 400,
-                width: 600,
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ScannerWidget(onScanSuccess: (code) {
-                  if (code != null) {
-                    Navigator.pop(context);
-                    onScanSuccess(code);
-                  }
-                }),
-              ),
+                  alignment: Alignment.center,
+                  color: const Color(0xFF12605B),
+                  child: Stack(children: <Widget>[
+                    ScannerWidget(onScanSuccess: (code) {
+                      if (code != null) {
+                        Navigator.pop(context);
+                        onScanSuccess(code);
+                      }
+                    }),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.all(responsive.fdp(20)),
+                            child: Image.asset(
+                              "lib/assets/remove_round.png",
+                              width: responsive.fdp(40),
+                              height: responsive.fdp(40),
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    Center(
+                      child: Image.asset(
+                        "lib/assets/scan_frame.png",
+                        width: responsive.fdp(300),
+                        height: responsive.fdp(300),
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  ])),
             ));
   }
 }
@@ -85,23 +109,7 @@ class _ScannerWidgetState extends State<ScannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _buildQrView(context),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text("Stop scanning"),
-        ),
-      ],
-    );
+    return _buildQrView(context);
   }
 
   Widget _buildQrView(BuildContext context) {
@@ -111,17 +119,10 @@ class _ScannerWidgetState extends State<ScannerWidget> {
     smallestDimension = min(smallestDimension, 550);
 
     return QRView(
-      key: qrKey,
-      onQRViewCreated: (controller) {
-        _onQRViewCreated(controller);
-      },
-      overlay: QrScannerOverlayShape(
-          borderColor: Colors.black,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: smallestDimension - 140),
-    );
+        key: qrKey,
+        onQRViewCreated: (controller) {
+          _onQRViewCreated(controller);
+        });
   }
 
   void _onQRViewCreated(QRViewController controller) {
